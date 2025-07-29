@@ -11,3 +11,12 @@ export const createArticle = async(req , res)=>{
         res.status(400).json({ error: error.message });
     }
 }
+
+export const getAllArticle = async(req , res)=>{
+    try {
+        const blogs = await Blog.find().sort({createdAt : -1})
+        res.json(blogs)
+    } catch (error) {
+        res.status(500).json({error :error.message})
+    }
+}
