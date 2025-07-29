@@ -20,3 +20,15 @@ export const getAllArticle = async(req , res)=>{
         res.status(500).json({error :error.message})
     }
 }
+
+export const getAllArticleById = async (req , res)=>{
+    try {
+        const blog = await Blog.findById(req.params.id)
+        if(!blog){
+            return res.status(400).json({msg : "blog non trouve"})
+        }
+        res.json(blog)
+    } catch (error) {
+        res.status(500).json({ error: err.message });
+    }
+}
