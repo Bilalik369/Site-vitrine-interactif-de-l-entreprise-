@@ -45,3 +45,12 @@ export const updateArticle  = async(req , res)=>{
         res.status(400).json({ error: err.message });
     }
 }
+
+export const deleteArticle = async (req, res) => {
+    try {
+      await Blog.findByIdAndDelete(req.params.id);
+      res.json({ message: "Deleted successfully" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
