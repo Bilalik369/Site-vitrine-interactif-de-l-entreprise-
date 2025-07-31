@@ -30,19 +30,19 @@ export const getAllArticleById = async (req , res)=>{
         }
         res.json(blog)
     } catch (error) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: error.message });
     }
 }
 
 export const updateArticle  = async(req , res)=>{
     try {
-        const updated = await Blog.findByIdAndUpdate(req.params.id)
+        const updated = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true })
         if(!updated){
             return res.status(400).json({msg : "blog not found"})
         }
         res.status(200).json(updated)
     } catch (error) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: error.message });
     }
 }
 
