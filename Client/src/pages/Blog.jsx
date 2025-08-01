@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector, useDispatch } from 'react-redux';
+import toast from 'react-hot-toast';
 import { 
   Search, 
   Filter, 
@@ -25,6 +26,7 @@ import {
   setFilter,
   clearFilter
 } from '../store/slices/blogSlice';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const Blog = () => {
   const dispatch = useDispatch();
@@ -36,6 +38,8 @@ const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -46,7 +50,14 @@ const Blog = () => {
   const categories = ['Développement Web', 'Applications Mobiles', 'E-commerce', 'Design', 'Technologies', 'Conseils'];
 
   useEffect(() => {
-    dispatch(fetchBlogPosts());
+    const loadPosts = async () => {
+      try {
+        await dispatch(fetchBlogPosts()).unwrap();
+      } catch (error) {
+        toast.error('Erreur lors du chargement des articles');
+      }
+    };
+    loadPosts();
   }, [dispatch]);
 
   useEffect(() => {
@@ -58,14 +69,17 @@ const Blog = () => {
     try {
       if (editingPost) {
         await dispatch(updateBlogPost({ id: editingPost._id, postData: formData })).unwrap();
+        toast.success('Article modifié avec succès !');
         setEditingPost(null);
       } else {
         await dispatch(createBlogPost(formData)).unwrap();
+        toast.success('Article créé avec succès !');
       }
       setShowForm(false);
       resetForm();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      toast.error(editingPost ? 'Erreur lors de la modification de l\'article' : 'Erreur lors de la création de l\'article');
     }
   };
 
@@ -80,13 +94,18 @@ const Blog = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) {
-      try {
-        await dispatch(deleteBlogPost(id)).unwrap();
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
-      }
+  const handleDeleteClick = (post) => {
+    setPostToDelete(post);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await dispatch(deleteBlogPost(postToDelete._id)).unwrap();
+      toast.success('Article supprimé avec succès !');
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast.error('Erreur lors de la suppression de l\'article');
     }
   };
 
@@ -255,7 +274,7 @@ const Blog = () => {
                               <Edit className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleDelete(post._id)}
+                              onClick={() => handleDeleteClick(post)}
                               className="p-1 text-gray-400 hover:text-red-600 transition-colors"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -431,6 +450,17 @@ const Blog = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Confirmer la suppression"
+        message={`Êtes-vous sûr de vouloir supprimer l'article "${postToDelete?.title}" ? Cette action est irréversible.`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+      />
     </div>
   );
 };
